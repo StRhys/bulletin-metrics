@@ -22,6 +22,34 @@
     <link rel="stylesheet" type="text/css" href="//cdn.ons.gov.uk/sixteens/cb6733a/css/main.css">
     <link href="https://cdn.ons.gov.uk/sixteens/658deeb/css/work-in-progress.css" rel="stylesheet" type="text/css">
     <script src="getListBulletins.js"></script>
+    <style>
+        table {
+            width: 95%;
+            padding: 2px;
+        }
+
+        .a {
+            /* min-width: 10px; */
+            width: 45%;
+
+            padding-right: 2px;
+            padding-left: 2px;
+            /* max-width: 20px; */
+        }
+
+        .b {
+            /* min-width: 10px; */
+            width: 25%;
+            padding-right: 2px;
+            padding-left: 2px;
+
+            /* max-width: 20px; */
+        }
+        th {
+            padding-right: 2px;
+            padding-left: 2px; 
+        }
+    </style>
 </head>
 
 <body class="pl-home">
@@ -41,7 +69,8 @@
         </div>
     </div>
 
-    <div class="background--gallery padding-top-md--4 padding-bottom-md--3">
+    <div class="background--gallery padding-top-md--4 padding-bottom--3">
+
         <div class="wrapper">
             <h3>Get word count history for a bulletin</h3>
             <p class="padding-left--1">
@@ -51,35 +80,73 @@
             <div id="chart"></div>
         </div>
     </div>
+    <div class="wrapper">
+        <table id="releases">
+            <tr>
+                <th>Release</th>
+                <th>Publication date</th>
+                <th>Pubs</th>
+                <th>Data</th>
+                <th>Methods</th>
+            </tr>
+        </table>
+    </div>
 
 </body>
 
 <script>
-    function countReleases(){
-        fetch("https://www.ons.gov.uk/releasecalendar/data", {
+    function countReleases() {
+        fetch(
+            "https://www.ons.gov.uk/releasecalendar/data", {
                 mode: "cors"
             }).then((data) => data.json()).then(function (data) {
-                // console.log (data)
+                console.log(data.result.paginator.end)
 
+            for (i=1; i < data.result.paginator.numberOfPages+1; i++) {
 
-                data.result.results.map(function (data) {
-                    // console.log (data.uri)
-                    fetch(domain + data.uri + "/data", {
+                console.log (i)
+              fetch(
+            "https://www.ons.gov.uk/releasecalendar/data?&size=500+&page=" + i, {
+                mode: "cors"
+            }).then((data) => data.json()).then(function (data) {  
+
+            let datasets = []
+            data.result.results.map(function (data) {
+                fetch(domain + data.uri + "/data", {
                     mode: "cors"
-                    }).then((data) => data.json()).then(function (data) {
-                    // console.log (data)
-                    console.log (data.relatedDatasets.length)
-                    console.log (data.description.releaseDate)
-                    })
-                })
-            })
-    }
-    
+                }).then((data) => data.json()).then(function (data) {
+                    // console.log(data)
+                    datasets = data.relatedDatasets.length
+                    publications = data.relatedDocuments.length
+                    methodology = data.relatedMethodology.length + data.relatedMethodologyArticle
+                        .length
+                    date = new Date(data.description.releaseDate).toUTCString()
 
+                    tr = createNode("tr");
+                    tr.innerHTML = "<td class= 'a'>" + data.description.title +
+                        "</td><td class= 'b'>" + date + "</td><td>" + publications +
+                        "</td><td>" + datasets + "</td><td>" + methodology + "</td>"
+                    append(releases, tr);
+
+                })
+
+            })
+        })
+    }
+        })
+    }
 </script>
 
 <script>
     let timeseries = []
+
+    function createNode(element) {
+        return document.createElement(element);
+    }
+
+    function append(parent, el) {
+        return parent.appendChild(el);
+    }
 
     function sortlist() {
         let lb = document.getElementById('listOfBulletins');
