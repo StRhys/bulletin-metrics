@@ -1,6 +1,6 @@
 function getListBulletins() {
-    fetch("publications.json", {
-            // fetch("https://www.ons.gov.uk/publications/data?sortBy=release_date&query=&filter=bulletin&size=250", {
+    // fetch("publications.json", {
+            fetch("https://www.ons.gov.uk/publications/data?sortBy=release_date&query=&filter=bulletin&size=250", {
             mode: 'cors'
         })
         .then(data => data.json())
