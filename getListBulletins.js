@@ -59,7 +59,12 @@ function getBulletinWordCountHistory(value) {
                         title: {
                             enabled: false
                         },
-                        min: 0
+                        min: 0,
+                        labels: {
+                        formatter: function () {
+                            return this.value;
+                        }
+                    }
                     },
                     legend: {
                         enabled: false
@@ -68,6 +73,9 @@ function getBulletinWordCountHistory(value) {
                         series: {
                             color: '#3B7A9E'
                         }
+                    },
+                    lang: {
+                        numericSymbols: null
                     },
                     xAxis: {
                         type: "category",

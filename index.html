@@ -55,6 +55,25 @@
 </body>
 
 <script>
+    function countReleases(){
+        fetch("https://www.ons.gov.uk/releasecalendar/data", {
+                mode: "cors"
+            }).then((data) => data.json()).then(function (data) {
+                // console.log (data)
+
+
+                data.result.results.map(function (data) {
+                    // console.log (data.uri)
+                    fetch(domain + data.uri + "/data", {
+                    mode: "cors"
+                    }).then((data) => data.json()).then(function (data) {
+                    // console.log (data)
+                    console.log (data.relatedDatasets.length)
+                    console.log (data.description.releaseDate)
+                    })
+                })
+            })
+    }
     
 
 </script>
@@ -88,6 +107,7 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         getListBulletins()
+        countReleases()
     })
 
     const domain = "https://www.ons.gov.uk"
