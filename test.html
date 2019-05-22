@@ -84,7 +84,7 @@
                 <input type="date" id="end">
             </div>
             <div class="col col--md-one-quarter col--lg-one-quarter">
-                <button class="btn btn--secondary" onClick="getBulletinCounts()">
+                <button class="btn btn--secondary" onClick="getAllCounts()">
                     Get data
                 </button>
             </div>
@@ -98,6 +98,7 @@
                             <th class='align-right'>Publications</th>
                             <th class='align-right'>Datasets</th>
                             <th class='align-right'>Methodologies</th>
+                            <th class='align-right'>Word count</th>
                         </tr>
                     </table>
                 </figure>
@@ -109,8 +110,12 @@
 
 </body>
 
+
 <script>
     let totalCounts = [];
+    let totalItemsCounts = [];
+    let publicationData = [];
+    let publicationDataWords = [];
     let rawReleaseCounts = new Array()
     let rawReleaseCountsinArray = ""
 
@@ -146,7 +151,8 @@
             const releasePageFetches = []
             for (i = 1; i <= pageCount; i++) {
                 releasePageFetches.push(
-                    fetch("https://www.ons.gov.uk/releasecalendar/data?&page=" + i + "&fromDateDay=" +
+                    fetch("https://www.ons.gov.uk/releasecalendar/data?&:uri=releasecalendar&page=" + i +
+                        "&fromDateDay=" +
                         startDay +
                         "&fromDateMonth=" + startMonth + "&fromDateYear=" + startYear + "&toDateDay=" +
                         endDay + "&toDateMonth=" + endMonth + "&toDateYear=" + endYear, {
@@ -182,11 +188,11 @@
                     })
                     .then(response => response.json())
                     .then(response => {
-
+                        splitDate = response.description.releaseDate.split("T")[0]
                         if (response.relatedMethodology != null || response.relatedMethodologyArticle !=
                             null) {
                             rawReleaseCounts.push({
-                                Date: response.description.releaseDate,
+                                Date: splitDate,
                                 Publications: response.relatedDocuments.length,
                                 Datasets: response.relatedDatasets.length,
                                 Methodologies: response.relatedMethodology.length +
@@ -194,7 +200,7 @@
                             })
                         } else {
                             rawReleaseCounts.push({
-                                Date: response.description.releaseDate,
+                                Date: splitDate,
                                 Publications: response.relatedDocuments.length,
                                 Datasets: response.relatedDatasets.length
                             })
@@ -217,26 +223,27 @@
         })
     }
 
-    function collateReleases() {
+    async function collateReleases() {
         for (i = 0; i < rawReleaseCounts.length; i++) {
-            let rawReleaseCountsinArray = totalCounts.find(x => x.Date == rawReleaseCounts[i].Date);
-
+            let rawReleaseCountsinArray = totalItemsCounts.find(x => x.Date == rawReleaseCounts[i].Date);
             if (rawReleaseCountsinArray != null) {
-                index = totalCounts.findIndex(x => x.Date == rawReleaseCounts[i].Date);
-                totalCounts[index].Publications = totalCounts[index].Publications + rawReleaseCounts[i].Publications
-                totalCounts[index].Datasets = totalCounts[index].Datasets + rawReleaseCounts[i].Datasets
-                totalCounts[index].Count = totalCounts[index].Methodologies + rawReleaseCounts[i].Methodologies
+                index = totalItemsCounts.findIndex(x => x.Date == rawReleaseCounts[i].Date);
+                totalItemsCounts[index].Publications = totalItemsCounts[index].Publications + rawReleaseCounts[i].Publications
+                totalItemsCounts[index].Datasets = totalItemsCounts[index].Datasets + rawReleaseCounts[i].Datasets
+                totalItemsCounts[index].Methodologies = totalItemsCounts[index].Methodologies + rawReleaseCounts[i].Methodologies
+                totalItemsCounts[index].Count = 0
             } else {
-                totalCounts.push({
+                totalItemsCounts.push({
                     Date: rawReleaseCounts[i].Date,
                     Publications: rawReleaseCounts[i].Publications,
                     Datasets: rawReleaseCounts[i].Datasets,
-                    Methodologies: rawReleaseCounts[i].Methodologies
+                    Methodologies: rawReleaseCounts[i].Methodologies,
+                    Count: 0
                 })
 
             }
         }
-        addContDatatoPage(totalCounts)
+        return totalItemsCounts;
     }
 
     function addContDatatoPage(totalCounts) {
@@ -251,7 +258,8 @@
             tr.innerHTML = "<td>" + datePretty +
                 "</td><td class='align-right' >" + totalCounts[i].Publications + "</td><td class='align-right'>" +
                 totalCounts[i].Datasets +
-                "</td><td class='align-right'>" + totalCounts[i].Methodologies + "</td>"
+                "</td><td class='align-right'>" + totalCounts[i].Methodologies + "</td><td class='align-right'>" +
+                totalCounts[i].Count + "</td>"
             append(releases, tr);
         }
     }
@@ -269,8 +277,122 @@
         endYear = endDate.getFullYear()
 
         const releaseData = await countTheReleases();
-        collateReleases()
+        const totalItemsCounts = await collateReleases(); 
+        return (releaseData)
     }
+
+    async function getAllCounts() {
+        const releaseData = await getBulletinCounts()
+        const publicationData = await bulletinList(releaseData);
+        const publicationDataWords = await wordCounts(publicationData);
+        const totalCounts = await finalCounts(publicationDataWords);
+        addContDatatoPage(totalCounts)
+    }
+
+    function bulletinList(releaseData) {
+        //Get the date and URI for all written content
+        for (i = 0; i < releaseData.length; i++) {
+            releaseData[i].relatedDocuments.map(result => {
+                let forWordCounts = []
+                splitDate = releaseData[i].description.releaseDate.split("T")[0]
+                publicationData.push({
+                    Date: splitDate,
+                    URI: result.uri,
+                })
+            })
+            releaseData[i].relatedMethodologyArticle.map(result => {
+                let forWordCounts = []
+                splitDate = releaseData[i].description.releaseDate.split("T")[0]
+                publicationData.push({
+                    Date: splitDate,
+                    URI: result.uri,
+                })
+            })
+            releaseData[i].relatedMethodology.map(result => {
+                let forWordCounts = []
+                splitDate = releaseData[i].description.releaseDate.split("T")[0]
+                publicationData.push({
+                    Date: splitDate,
+                    URI: result.uri,
+                })
+            })
+        }
+        return publicationData;
+    }
+
+
+    function wordCounts(publicationData) {
+            return new Promise(async (resolve, reject) => {
+            let publicationDataWords = []
+            let thing = ""
+
+            for (i = 0; i < publicationData.length; i++) {
+                let releaseDate = publicationData[i].Date
+                publicationDataWords.push(
+                    fetch(domain + publicationData[i].URI + "/data", {
+                        mode: "cors",
+                    })
+                    .then(response => response.json())
+                    .then(response => {
+                        let totalWords = 0
+                        let bulletinData = response;  
+                        if (response.type == "static_qmi"){
+                            var releaseDate = new Date(response.description.lastRevised);
+                        }
+                        else {
+                            var releaseDate = new Date(response.description.releaseDate);
+                        }
+                        index = publicationData.findIndex(x => x.URI == response.uri);
+                        releaseDate.setHours( releaseDate.getHours() + 1 );
+                        z = releaseDate.toISOString()
+                            if(z.split("T")[0] == publicationData[index].Date){
+                                if (response.sections != null) {
+                                    let sections = response.sections.length
+                                    for (var i = 0; i < sections; i++) {
+                                        bulletinWords = bulletinData.sections[i].markdown.split(" ").length;
+                                        totalWords = totalWords + bulletinWords
+                                    }
+                                    splitDate = z.split("T")[0]
+                                }
+                        }
+                        else {
+                            console.log("Date didn't match: " + response.description.releaseDate)
+                        }
+                        return {
+                            Date: splitDate,
+                            Words: totalWords
+                        
+                        }
+                    }).catch(error => {
+                        reject(error)
+                    })
+                )
+            }
+
+            const allReleasePages = await Promise.all(publicationDataWords).then(publicationDataWords => {
+                return publicationDataWords;
+            }).catch(error => {
+                console.error(error)
+                reject(error);
+                return;
+            })
+            resolve(allReleasePages.flat(1));
+        })
+    }
+
+    function finalCounts(publicationDataWords) {
+        let totalCounts = totalItemsCounts
+        for (i = 0; i < publicationDataWords.length; i++) {
+            index = totalCounts.findIndex(x => x.Date == publicationDataWords[i].Date);
+            if (index == -1) {
+                console.log ("Bad things happened")
+            } else {
+            totalCounts[index].Count = totalCounts[index].Count + publicationDataWords[i].Words
+            }
+        }
+        return totalCounts
+    }
+
 </script>
 
 <script>
@@ -310,8 +432,10 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
         getListBulletins()
-        document.getElementById("start").valueAsDate = new Date();
-        document.getElementById("end").valueAsDate = new Date();
+        // document.getElementById("start").valueAsDate = new Date();
+        // document.getElementById("end").valueAsDate = new Date();
+        document.getElementById("start").value="2019-05-01";
+        document.getElementById("end").value= "2019-05-02";
     })
 </script>
 
