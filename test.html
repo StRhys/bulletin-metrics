@@ -92,7 +92,7 @@
         <div class="col-wrap">
             <div class="col col--md-two-thirds col--lg-two-thirds">
                 <figure class="figure">
-                    <table class="table" id="releases">
+                    <table class="table">
                         <tr class="table__header-row">
                             <th class='align-left'>Release date</th>
                             <th class='align-right'>Publications</th>
@@ -100,6 +100,9 @@
                             <th class='align-right'>Methodologies</th>
                             <th class='align-right'>Word count</th>
                         </tr>
+                        <tbody id="releases">
+                            <tr></tr>
+                        </tbody>
                     </table>
                 </figure>
             </div>
@@ -280,8 +283,19 @@
         const totalItemsCounts = await collateReleases(); 
         return (releaseData)
     }
+    
+    function getAllCounts() {    
+        document.getElementById("releases").innerHTML = "";
+        let startDate = new Date(document.getElementById("start").value)
+        let endDate = new Date(document.getElementById("end").value)
+        if(endDate - startDate < 15553000000) {
+            countReleases()
+        } else {
+            alert ("Currently date needs to be less than 6 months")
+        }
+    }
 
-    async function getAllCounts() {
+    async function countReleases() {
         const releaseData = await getBulletinCounts()
         const publicationData = await bulletinList(releaseData);
         const publicationDataWords = await wordCounts(publicationData);
@@ -291,6 +305,7 @@
 
     function bulletinList(releaseData) {
         //Get the date and URI for all written content
+        publicationData = []
         for (i = 0; i < releaseData.length; i++) {
             releaseData[i].relatedDocuments.map(result => {
                 let forWordCounts = []
@@ -432,10 +447,8 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
         getListBulletins()
-        // document.getElementById("start").valueAsDate = new Date();
-        // document.getElementById("end").valueAsDate = new Date();
-        document.getElementById("start").value="2019-05-01";
-        document.getElementById("end").value= "2019-05-02";
+        document.getElementById("start").valueAsDate = new Date();
+        document.getElementById("end").valueAsDate = new Date();
     })
 </script>
 
