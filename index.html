@@ -55,7 +55,8 @@
         <div class="page-intro background--astral padding-top-md--4">
             <div class="pl-wrap__inner padding-top-sm--4">
                 <div class="wrapper">
-                    <h1 class="page-intro__title page-intro__title--home-big padding-bottom-md--4">Publishing metrics</h1>
+                    <h1 class="page-intro__title page-intro__title--home-big padding-bottom-md--4">Publishing metrics
+                    </h1>
                 </div>
             </div>
         </div>
@@ -64,9 +65,10 @@
     <div class="background--gallery padding-top-md--4 padding-bottom--3">
 
         <div class="wrapper">
-            <h3>Get word count history for a bulletin</h3>
+            <h3 id="bulletin">Get word count history <button onclick="toggle()">Toggle bulletins/articles</button></h3>
             <p class="padding-left--1">
-                <select class="js-example-basic-single" style="width:50%" id="listOfBulletins" onchange="getBulletinWordCountHistory()">
+                <select class="js-example-basic-single" style="width:50%" id="listOfBulletins"
+                    onchange="getBulletinWordCountHistory()">
                 </select>
             </p>
             <div id="chart"></div>
@@ -128,6 +130,16 @@
         const releaseData = await getReleasePage(releaseURLs);
         return releaseData;
     }
+    let article = 0
+
+    function toggle() {
+        if (article == 0) {
+            article = 1
+        } else {
+            article = 0
+        }
+        getListBulletins()
+    }
 
     function checkPages() {
         return new Promise(async (resolve, reject) => {
@@ -154,7 +166,8 @@
             const releasePageFetches = []
             for (i = 1; i <= pageCount; i++) {
                 releasePageFetches.push(
-                    fetch("https://www.ons.gov.uk/releasecalendar/data?&:uri=releasecalendar&page=" + i +
+                    fetch("https://www.ons.gov.uk/releasecalendar/data?&:uri=releasecalendar&page=" +
+                        i +
                         "&fromDateDay=" +
                         startDay +
                         "&fromDateMonth=" + startMonth + "&fromDateYear=" + startYear + "&toDateDay=" +
@@ -192,7 +205,8 @@
                     .then(response => response.json())
                     .then(response => {
                         splitDate = response.description.releaseDate.split("T")[0]
-                        if (response.relatedMethodology != null || response.relatedMethodologyArticle !=
+                        if (response.relatedMethodology != null || response
+                            .relatedMethodologyArticle !=
                             null) {
                             rawReleaseCounts.push({
                                 Date: splitDate,
@@ -231,9 +245,11 @@
             let rawReleaseCountsinArray = totalItemsCounts.find(x => x.Date == rawReleaseCounts[i].Date);
             if (rawReleaseCountsinArray != null) {
                 index = totalItemsCounts.findIndex(x => x.Date == rawReleaseCounts[i].Date);
-                totalItemsCounts[index].Publications = totalItemsCounts[index].Publications + rawReleaseCounts[i].Publications
+                totalItemsCounts[index].Publications = totalItemsCounts[index].Publications + rawReleaseCounts[i]
+                    .Publications
                 totalItemsCounts[index].Datasets = totalItemsCounts[index].Datasets + rawReleaseCounts[i].Datasets
-                totalItemsCounts[index].Methodologies = totalItemsCounts[index].Methodologies + rawReleaseCounts[i].Methodologies
+                totalItemsCounts[index].Methodologies = totalItemsCounts[index].Methodologies + rawReleaseCounts[i]
+                    .Methodologies
                 totalItemsCounts[index].Count = 0
             } else {
                 totalItemsCounts.push({
@@ -280,18 +296,18 @@
         endYear = endDate.getFullYear()
 
         const releaseData = await countTheReleases();
-        const totalItemsCounts = await collateReleases(); 
+        const totalItemsCounts = await collateReleases();
         return (releaseData)
     }
-    
-    function getAllCounts() {    
+
+    function getAllCounts() {
         document.getElementById("releases").innerHTML = "";
         let startDate = new Date(document.getElementById("start").value)
         let endDate = new Date(document.getElementById("end").value)
-        if(endDate - startDate < 15553000000) {
+        if (endDate - startDate < 15553000000) {
             countReleases()
         } else {
-            alert ("Date range (currently) needs to be less than 6 months")
+            alert("Date range (currently) needs to be less than 6 months")
         }
     }
 
@@ -337,7 +353,7 @@
 
 
     function wordCounts(publicationData) {
-            return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             let publicationDataWords = []
             let thing = ""
 
@@ -350,33 +366,32 @@
                     .then(response => response.json())
                     .then(response => {
                         let totalWords = 0
-                        let bulletinData = response;  
-                        if (response.type == "static_qmi"){
+                        let bulletinData = response;
+                        if (response.type == "static_qmi") {
                             var releaseDate = new Date(response.description.lastRevised);
-                        }
-                        else {
+                        } else {
                             var releaseDate = new Date(response.description.releaseDate);
                         }
                         index = publicationData.findIndex(x => x.URI == response.uri);
-                        releaseDate.setHours( releaseDate.getHours() + 1 );
+                        releaseDate.setHours(releaseDate.getHours() + 1);
                         z = releaseDate.toISOString()
-                            if(z.split("T")[0] == publicationData[index].Date){
-                                if (response.sections != null) {
-                                    let sections = response.sections.length
-                                    for (var i = 0; i < sections; i++) {
-                                        bulletinWords = bulletinData.sections[i].markdown.split(" ").length;
-                                        totalWords = totalWords + bulletinWords
-                                    }
-                                    splitDate = z.split("T")[0]
+                        if (z.split("T")[0] == publicationData[index].Date) {
+                            if (response.sections != null) {
+                                let sections = response.sections.length
+                                for (var i = 0; i < sections; i++) {
+                                    bulletinWords = bulletinData.sections[i].markdown.split(" ")
+                                        .length;
+                                    totalWords = totalWords + bulletinWords
                                 }
-                        }
-                        else {
+                                splitDate = z.split("T")[0]
+                            }
+                        } else {
                             console.log("Date didn't match: " + response.description.releaseDate)
                         }
                         return {
                             Date: splitDate,
                             Words: totalWords
-                        
+
                         }
                     }).catch(error => {
                         reject(error)
@@ -400,14 +415,13 @@
         for (i = 0; i < publicationDataWords.length; i++) {
             index = totalCounts.findIndex(x => x.Date == publicationDataWords[i].Date);
             if (index == -1) {
-                console.log ("Bad things happened")
+                console.log("Bad things happened")
             } else {
-            totalCounts[index].Count = totalCounts[index].Count + publicationDataWords[i].Words
+                totalCounts[index].Count = totalCounts[index].Count + publicationDataWords[i].Words
             }
         }
         return totalCounts
     }
-
 </script>
 
 <script>

@@ -1,6 +1,15 @@
+let chartBulletinList = "https://www.ons.gov.uk/publications/data?sortBy=release_date&query=&filter=bulletin&size=250"
+let chartArticleList = "https://www.ons.gov.uk/publications/data?sortBy=release_date&query=&filter=article&size=250"
+let chartList = "";
+
 function getListBulletins() {
-    // fetch("publications.json", {
-            fetch("https://www.ons.gov.uk/publications/data?sortBy=release_date&query=&filter=bulletin&size=250", {
+    document.getElementById("listOfBulletins").innerHTML = ""
+    if (article == 0) {
+        chartList = chartBulletinList
+    } else {
+        chartList = chartArticleList
+    }
+    fetch(chartList, {
             mode: 'cors'
         })
         .then(data => data.json())
@@ -9,7 +18,7 @@ function getListBulletins() {
                 bulletinTitle = data.description.title
                 if (bulletinTitle == "2011 Census") {
                     //ignore census ones
-                    console.log ("Ignoring census bulletin")
+                    console.log("Ignoring census bulletin")
                 } else {
                     let node = document.createElement("option");
                     let textnode = document.createTextNode(bulletinTitle);
@@ -61,10 +70,10 @@ function getBulletinWordCountHistory(value) {
                         },
                         min: 0,
                         labels: {
-                        formatter: function () {
-                            return this.value;
+                            formatter: function () {
+                                return this.value;
+                            }
                         }
-                    }
                     },
                     legend: {
                         enabled: false
