@@ -126,6 +126,7 @@
 
     async function countTheReleases() {
         const pageCount = await checkPages();
+        console.log(pageCount)
         const releaseURLs = await getAllURLs(pageCount);
         const releaseData = await getReleasePage(releaseURLs);
         return releaseData;
@@ -154,7 +155,7 @@
                     if (response.result.numberOfResults <= 10) {
                         resolve(pageCount);
                     } else {
-                        pageCount = response.result.paginator.numberOfPages
+                        pageCount = 1 // response.result.paginator.numberOfPages
                         resolve(pageCount);
                     };
                 })
@@ -188,7 +189,8 @@
             const allReleasePages = await Promise.all(releasePageFetches).then(releasePage => {
                 return releasePage;
             }).catch(error => {
-                console.error(error)
+                console.log('here 1')
+                // console.error(error)
                 reject(error);
                 return;
             })
@@ -200,30 +202,33 @@
         return new Promise(async (resolve, reject) => {
             const releasePageFetches = releaseURLs.map(releaseURL => {
                 return fetch(`https://www.ons.gov.uk${releaseURL}/data`, {
-                        mode: "cors"
+                        mode: "cors",
                     })
                     .then(response => response.json())
                     .then(response => {
-                        splitDate = response.description.releaseDate.split("T")[0]
-                        if (response.relatedMethodology != null || response
-                            .relatedMethodologyArticle !=
+                        console.log('here 3: ', response)
+                        splitDate = response.description["release_date"].split("T")[0]
+                        if (response.related_methodology != null || response
+                            .related_methodology_article !=
                             null) {
                             rawReleaseCounts.push({
                                 Date: splitDate,
-                                Publications: response.relatedDocuments.length,
-                                Datasets: response.relatedDatasets.length,
-                                Methodologies: response.relatedMethodology.length +
-                                    response.relatedMethodologyArticle.length
+                                Publications: response.related_documents.length,
+                                Datasets: response.related_datasets.length,
+                                Methodologies: response.related_methodology.length +
+                                    response.related_methodology_article.length
                             })
                         } else {
                             rawReleaseCounts.push({
                                 Date: splitDate,
-                                Publications: response.relatedDocuments.length,
-                                Datasets: response.relatedDatasets.length
+                                Publications: response["related_documents"].length,
+                                Datasets: response["related_datasets"].length
                             })
                         }
                         return response
                     }).catch(error => {
+                        console.log("here 4")
+                        console.log(error)
                         reject(error)
                     })
 
@@ -232,7 +237,7 @@
             const allReleasePages = await Promise.all(releasePageFetches).then(releasePage => {
                 return releasePage;
             }).catch(error => {
-                console.error(error)
+                // console.error(error)
                 reject(error);
                 return;
             })
@@ -323,25 +328,25 @@
         //Get the date and URI for all written content
         publicationData = []
         for (i = 0; i < releaseData.length; i++) {
-            releaseData[i].relatedDocuments.map(result => {
+            releaseData[i].related_documents.map(result => {
                 let forWordCounts = []
-                splitDate = releaseData[i].description.releaseDate.split("T")[0]
+                splitDate = releaseData[i].description.release_date.split("T")[0]
                 publicationData.push({
                     Date: splitDate,
                     URI: result.uri,
                 })
             })
-            releaseData[i].relatedMethodologyArticle.map(result => {
+            releaseData[i].related_methodology_article.map(result => {
                 let forWordCounts = []
-                splitDate = releaseData[i].description.releaseDate.split("T")[0]
+                splitDate = releaseData[i].description.release_date.split("T")[0]
                 publicationData.push({
                     Date: splitDate,
                     URI: result.uri,
                 })
             })
-            releaseData[i].relatedMethodology.map(result => {
+            releaseData[i].related_methodology.map(result => {
                 let forWordCounts = []
-                splitDate = releaseData[i].description.releaseDate.split("T")[0]
+                splitDate = releaseData[i].description.release_date.split("T")[0]
                 publicationData.push({
                     Date: splitDate,
                     URI: result.uri,
@@ -351,6 +356,19 @@
         return publicationData;
     }
 
+    function fetchWithRetry(url, options, retries = 5, backoff = 3000) {
+        return fetch(url, options)
+            .catch((error) => {
+                if (retries === 0) {
+                    throw error;
+                }
+                return new Promise((resolve) => 
+                    setTimeout(resolve, backoff)
+                ).then(() => 
+                    fetchWithRetry(url, options, retries - 1, backoff * 2)
+                );
+            });
+    }
 
     function wordCounts(publicationData) {
         return new Promise(async (resolve, reject) => {
@@ -360,7 +378,7 @@
             for (i = 0; i < publicationData.length; i++) {
                 let releaseDate = publicationData[i].Date
                 publicationDataWords.push(
-                    fetch(domain + publicationData[i].URI + "/data", {
+                    fetchWithRetry("" + domain + publicationData[i].URI + "/data", {
                         mode: "cors",
                     })
                     .then(response => response.json())
@@ -386,7 +404,7 @@
                                 splitDate = z.split("T")[0]
                             }
                         } else {
-                            console.log("Date didn't match: " + response.description.releaseDate)
+                            // console.log("Date didn't match: " + response.description.releaseDate)
                         }
                         return {
                             Date: splitDate,
@@ -402,7 +420,7 @@
             const allReleasePages = await Promise.all(publicationDataWords).then(publicationDataWords => {
                 return publicationDataWords;
             }).catch(error => {
-                console.error(error)
+                // console.error(error)
                 reject(error);
                 return;
             })
