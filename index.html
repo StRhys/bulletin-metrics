@@ -201,7 +201,7 @@
     function getReleasePage(releaseURLs) {
         return new Promise(async (resolve, reject) => {
             const releasePageFetches = releaseURLs.map(releaseURL => {
-                return fetch(`https://www.ons.gov.uk${releaseURL}/data`, {
+                return fetch(`https://cors-anywhere.herokuapp.com/https://www.ons.gov.uk${releaseURL}/data`, {
                         mode: "cors",
                     })
                     .then(response => response.json())
@@ -378,7 +378,7 @@
             for (i = 0; i < publicationData.length; i++) {
                 let releaseDate = publicationData[i].Date
                 publicationDataWords.push(
-                    fetchWithRetry("" + domain + publicationData[i].URI + "/data", {
+                    fetchWithRetry("https://cors-anywhere.herokuapp.com/" + domain + publicationData[i].URI + "/data", {
                         mode: "cors",
                     })
                     .then(response => response.json())
