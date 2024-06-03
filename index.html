@@ -78,12 +78,8 @@
         <h3>Get counts for items published in date range</h3>
         <div class="col-wrap padding-top-md--4 padding-bottom--3">
             <div class="col col--md-one-quarter col--lg-one-quarter">
-                <label for="start">Start date:</label>
+                <label for="start">Date:</label>
                 <input type="date" id="start">
-            </div>
-            <div class="col col--md-one-quarter col--lg-one-quarter">
-                <label for="end">End date:</label>
-                <input type="date" id="end">
             </div>
             <div class="col col--md-one-quarter col--lg-one-quarter">
                 <button class="btn btn--secondary" onClick="getAllCounts()">
@@ -290,7 +286,8 @@
 
     async function getBulletinCounts() {
         let startDate = new Date(document.getElementById("start").value)
-        let endDate = new Date(document.getElementById("end").value)
+        let endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 1);
 
         startDay = startDate.getDate()
         startMonth = startDate.getMonth() + 1
@@ -308,7 +305,8 @@
     function getAllCounts() {
         document.getElementById("releases").innerHTML = "";
         let startDate = new Date(document.getElementById("start").value)
-        let endDate = new Date(document.getElementById("end").value)
+        let endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 1);
         if (endDate - startDate < 15553000000) {
             countReleases()
         } else {
@@ -480,7 +478,7 @@
     document.addEventListener("DOMContentLoaded", async () => {
         getListBulletins()
         document.getElementById("start").valueAsDate = new Date();
-        document.getElementById("end").valueAsDate = new Date();
+        // document.getElementById("end").valueAsDate = new Date();
     })
 </script>
 
